@@ -152,7 +152,7 @@ Mở trình duyệt:
 ### 3. Chạy migrations
 
 ```bash
-docker compose exec backend alembic upgrade head
+docker compose exec backend alembic -c alembic/alembic.ini upgrade head
 ```
 
 ### 4. Đăng nhập demo trên frontend
@@ -186,7 +186,7 @@ pip install -r requirements.txt
 docker compose up db -d
 
 # Chạy migrations
-alembic upgrade head
+alembic -c alembic/alembic.ini upgrade head
 
 # Khởi động backend
 uvicorn app.main:app --reload --port 8000
