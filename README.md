@@ -35,21 +35,6 @@
 
 ---
 
-## 💼 Portfolio Highlights
-
-Dự án này được thiết kế như một full-stack portfolio project có thể đưa vào CV:
-
-- Xây dựng hệ thống điểm danh end-to-end với React, FastAPI, PostgreSQL/pgvector và InsightFace ArcFace.
-- Xử lý camera real-time qua WebSocket, nhận diện embedding, cooldown check-in và dashboard thống kê.
-- Thiết kế REST API bất đồng bộ cho quản lý nhân viên, lịch sử điểm danh, export CSV và health check.
-- Docker hoá toàn bộ stack, có migration Alembic, validation ảnh, token guard và test tự động cho các phần lõi.
-
-Gợi ý bullet CV:
-
-> Built a full-stack face attendance system using React, FastAPI, PostgreSQL/pgvector, and InsightFace ArcFace for real-time employee check-in via WebSocket camera streaming.
-
----
-
 ## 🏗️ Kiến trúc hệ thống
 
 ```mermaid
