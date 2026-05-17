@@ -1,0 +1,108 @@
+services:
+  # ========================
+  # Database: PostgreSQL + pgvector
+  # ========================
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: face_attendance_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-face_attendance}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-face_attendance}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - face_network
+
+  # ========================
+  # Backend: FastAPI
+  # ========================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: face_attendance_backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-face_attendance}
+      DEBUG: ${DEBUG:-false}
+      INSIGHTFACE_MODEL: ${INSIGHTFACE_MODEL:-buffalo_l}
+      FACE_RECOGNITION_THRESHOLD: ${FACE_RECOGNITION_THRESHOLD:-0.4}
+      WORK_START_TIME: ${WORK_START_TIME:-08:00}
+      WORK_END_TIME: ${WORK_END_TIME:-17:00}
+      LATE_THRESHOLD_MINUTES: ${LATE_THRESHOLD_MINUTES:-15}
+      TIMEZONE: ${TIMEZONE:-Asia/Ho_Chi_Minh}
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173","http://frontend"]'
+      SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-token}
+      CAMERA_STREAM_TOKEN: ${CAMERA_STREAM_TOKEN:-dev-admin-token}
+    volumes:
+      - uploaded_images:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - face_network
+
+  # ========================
+  # Frontend: React (Nginx)
+  # ========================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
+        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8000/api/recognition/stream}
+    container_name: face_attendance_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - face_network
+
+  # ========================
+  # Redis (Cache embedding - tuỳ chọn)
+  # ========================
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: face_attendance_redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - face_network
+
+volumes:
+  db_data:
+    driver: local
+  uploaded_images:
+    driver: local
+  # redis_data:
+  #   driver: local
+
+networks:
+  face_network:
+    driver: bridge

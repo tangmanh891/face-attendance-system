@@ -1,0 +1,18 @@
+target-version = "py311"
+line-length = 100
+exclude = [
+    "alembic/",
+    ".venv",
+    "__pycache__",
+]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",
+    "B008",
+    "W191",
+]
+
+[lint.isort]
+known-first-party = ["app"]
